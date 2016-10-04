@@ -1,1 +1,23 @@
 #!/bin/bash
+
+
+set -eu -o pipefail
+shopt -s failglob
+
+
+wget_args="-t 5 -T 30 --progress=dot"
+
+
+# Download the image for this machine, and verify its integrity.
+while [ ! -f "${tmp_dir}/image.img" ] || \
+    gpg --verify "${tmp_dir}/image.img" "${tmp_dir}/image.img.gpg" > /dev/null 2>&1
+do
+    wget ${wget_args} "${repository_url}/${hostname}/image.img" -O "${tmp_dir}/image.img"
+    wget ${wget_args} "${repository_url}/${hostname}/image.img.gpg" -O "${tmp_dir}/image.img.gpg"
+done
+
+
+# dd or mkfs/untar, depending on whether the downloaded file is an image or tarball
+
+
+# update-grub
