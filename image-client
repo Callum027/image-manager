@@ -75,7 +75,7 @@ usage()
 # Constants.
 image="image.img"
 image_type="${image##.}"
-image_gpg="${image}.gpg"
+image_gpg="${image}.sig"
 
 
 # Default parameters.
@@ -100,6 +100,7 @@ do
         -pb|--partition-b) partition_b="${2}"; shift 2;;
         -gda|--grub-default-a) grub_default_a="${2}"; shift 2;;
         -gdb|--grub-default-b) grub_default_b="${2}"; shift 2;;
+        -wr|--wget-repository) wget_repository="${2}"; shift 2;;
         *) usage; exit 1;;
     esac
 done
@@ -121,7 +122,7 @@ log_debug
 tmp_dir=$(mktemp -d --suffix="${name}.XXXXXXXXXX")
 
 wget_args="-t 5 -T 30 --progress=dot"
-wget_repository=""
+# wget_repository=""
 
 dd_bs="128K"
 
