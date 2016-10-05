@@ -59,11 +59,16 @@ usage()
     echo "Usage: $(basename $0) [OPTION]..." 1>&2
     echo "Install the latest version of this system's image to the alternate partition." 1>&2
     echo 1>&2
-    echo "  -h, --help                       display this help message and exit" 1>&2
-    echo "  -v LEVEL, --verbosity LEVEL      set logging verbosity to LEVEL, default 4" 1>&2
-    echo "                                   range: 0-5, verbosity increases with value" 1>&2
-    echo "  -pa DEVICE, --partition-a DEVICE use DEVICE as the currently active partition" 1>&2
-    echo "  -pb DEVICE, --partition-b DEVICE use DEVICE as the partition to install the image to" 1>&2
+    echo "  -h, --help                        display this help message and exit" 1>&2
+    echo "  -v LEVEL, --verbosity LEVEL       set logging verbosity to LEVEL, default 4" 1>&2
+    echo "                                    range: 0-5, verbosity increases with value" 1>&2
+    echo "  -pa DEVICE, --partition-a DEVICE  use DEVICE as the currently active partition" 1>&2
+    echo "                                    default: auto-detect" 1>&2
+    echo "  -pb DEVICE, --partition-b DEVICE  use DEVICE as the partition to install the image to" 1>&2
+    echo "  -gda ENTRY, --gdb-default-a ENTRY use ENTRY as the currently active GRUB default" 1>&2
+    echo "                                    default: auto-detect" 1>&2
+    echo "  -gdb ENTRY, --gdb-default-b ENTRY use ENTRY as the new GRUB default" 1>&2
+    echo "  -wr URL, --wget-repository URL    use URL as the image repository" 1>&2
 }
 
 
@@ -77,6 +82,12 @@ image="image.img"
 image_type="${image##.}"
 image_gpg="${image}.sig"
 
+wget_args="-t 5 -T 30 --progress=dot"
+
+dd_bs="128K"
+
+mkfs_type="ext4"
+
 
 # Default parameters.
 verbosity=4
@@ -86,7 +97,7 @@ hostname=$(hostname -f)
 partition_a=$(mount -l | grep "^[^[:space:]]* on / " | awk '{ print $1 }')
 # partition_b=
 
-# grub_default_a=
+grub_default_a=$(grep "^[:space:]*GRUB_DEFAULT=" /etc/default/grub | sed "s/^[:space:]*GRUB_DEFAULT=\"+\(.*\)\"+$/\1/")
 # grub_default_b=
 
 
@@ -106,6 +117,10 @@ do
 done
 
 
+# Runtime variables.
+tmp_dir=$(mktemp -d --suffix="${name}.XXXXXXXXXX")
+
+
 # Startup logging.
 log_info "${name} version ${version}"
 log_info
@@ -116,20 +131,6 @@ log_debug "partition_b: ${partition_b}"
 log_debug "grub_default_a: ${grub_default_a}"
 log_debug "grub_default_b: ${grub_default_b}"
 log_debug
-
-
-# Runtime variables.
-tmp_dir=$(mktemp -d --suffix="${name}.XXXXXXXXXX")
-
-wget_args="-t 5 -T 30 --progress=dot"
-# wget_repository=""
-
-dd_bs="128K"
-
-mkfs_type="ext4"
-
-grub_default_a=$(grep "^[:space:]*GRUB_DEFAULT=" /etc/default/grub | sed "s/^[:space:]*GRUB_DEFAULT=\"+\(.*\)\"+$/\1/")
-[ $grub_default_a -eq 0 ] && grub_default_b="1" || grub_default_b="0"
 
 
 # Download the image for this machine, and verify its integrity.
