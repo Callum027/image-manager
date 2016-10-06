@@ -79,7 +79,8 @@ usage()
 
 
 # Constants.
-image="image.img"
+# image="image.img"
+image="image.tar.gz"
 image_type="${image##.}"
 image_gpg="${image}.sig"
 
@@ -109,7 +110,7 @@ do
     case "${1}" in
         -h|--help) usage; exit 1;;
         -v|--verbosity) verbosity="${2}"; shift 2;;
-        -nv|--no-verify) no_verify="true"; shift 2;;
+        -nv|--no-verify) no_verify="true"; shift 1;;
         -pa|--partition-a) partition_a="${2}"; shift 2;;
         -pb|--partition-b) partition_b="${2}"; shift 2;;
         -gda|--grub-default-a) grub_default_a="${2}"; shift 2;;
