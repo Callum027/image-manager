@@ -143,11 +143,11 @@ log_info "downloading image"
 while true
 do
     wget ${wget_args} "${wget_repository}/${hostname}/${image}" -O "${tmp_dir}/${image}"
-    wget ${wget_args} "${wget_repository}/${hostname}/${image_gpg}" -O "${tmp_dir}/${image}"
 
-    log_info "verifying image"
     if [ "${no_verify}" = "false" ]
     then
+        wget ${wget_args} "${wget_repository}/${hostname}/${image_gpg}" -O "${tmp_dir}/${image}"
+        log_info "verifying image"
         if gpg --verify "${tmp_dir}/${image}" "${tmp_dir}/${image_gpg}" > /dev/null 2>&1
         then
             break
