@@ -155,7 +155,7 @@ do
         else
             log_info "image verification failed, redownloading image"
         fi
-    elif [ "${no_verify}" != "true" ]
+    elif [ "${no_verify}" = "true" ]
     then
         break
     else
