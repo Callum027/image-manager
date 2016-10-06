@@ -157,6 +157,8 @@ do
         fi
     elif [ "${no_verify}" != "true" ]
     then
+        break
+    else
         log_error_exit 1 "invalid value '${no_verify}' for no_verify"
     fi
 done
