@@ -62,6 +62,7 @@ usage()
     echo "  -h, --help                        display this help message and exit" 1>&2
     echo "  -v LEVEL, --verbosity LEVEL       set logging verbosity to LEVEL, default 4" 1>&2
     echo "                                    range: 0-5, verbosity increases with value" 1>&2
+    echo "  -nv, --no-verify                  disable image verification" 1>&2
     echo "  -pa DEVICE, --partition-a DEVICE  use DEVICE as the currently active partition" 1>&2
     echo "                                    default: auto-detect" 1>&2
     echo "  -pb DEVICE, --partition-b DEVICE  use DEVICE as the partition to install the image to" 1>&2
@@ -91,13 +92,14 @@ mkfs_type="ext4"
 
 # Default parameters.
 verbosity=4
+no_verify="false"
 
 hostname=$(hostname -f)
 
 partition_a=$(mount -l | grep "^[^[:space:]]* on / " | awk '{ print $1 }')
 # partition_b=
 
-grub_default_a=$(grep "^[:space:]*GRUB_DEFAULT=" /etc/default/grub | sed "s/^[:space:]*GRUB_DEFAULT=\"+\(.*\)\"+$/\1/")
+grub_default_a=$(grep "^[[:space:]]*GRUB_DEFAULT=" /etc/default/grub | sed "s/^[[:space:]]*GRUB_DEFAULT=\"\{0,1\}\(.*\)\"\{0,1\}$/\1/")
 # grub_default_b=
 
 
@@ -107,6 +109,7 @@ do
     case "${1}" in
         -h|--help) usage; exit 1;;
         -v|--verbosity) verbosity="${2}"; shift 2;;
+        -nv|--no-verify) no_verify="true"; shift 2;;
         -pa|--partition-a) partition_a="${2}"; shift 2;;
         -pb|--partition-b) partition_b="${2}"; shift 2;;
         -gda|--grub-default-a) grub_default_a="${2}"; shift 2;;
@@ -118,13 +121,14 @@ done
 
 
 # Runtime variables.
-tmp_dir=$(mktemp -d --suffix="${name}.XXXXXXXXXX")
+tmp_dir=$(mktemp -d "${name}.XXXXXXXXXX")
 
 
 # Startup logging.
 log_info "${name} version ${version}"
 log_info
 log_debug "verbosity: ${verbosity}"
+log_debug "no_verify: ${no_verify}"
 log_debug "hostname: ${hostname}"
 log_debug "partition_a: ${partition_a}"
 log_debug "partition_b: ${partition_b}"
@@ -142,11 +146,17 @@ do
     wget ${wget_args} "${wget_repository}/${hostname}/${image_gpg}" -O "${tmp_dir}/${image}"
 
     log_info "verifying image"
-    if gpg --verify "${tmp_dir}/${image}" "${tmp_dir}/${image_gpg}" > /dev/null 2>&1
+    if [ "${no_verify}" = "false" ]
     then
-        break
-    else
-        log_info "image verification failed, redownloading image"
+        if gpg --verify "${tmp_dir}/${image}" "${tmp_dir}/${image_gpg}" > /dev/null 2>&1
+        then
+            break
+        else
+            log_info "image verification failed, redownloading image"
+        fi
+    elif [ "${no_verify}" != "true" ]
+    then
+        log_error_exit 1 "invalid value '${no_verify}' for no_verify"
     fi
 done
 
